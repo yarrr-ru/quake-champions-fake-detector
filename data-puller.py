@@ -31,6 +31,8 @@ class DataPuller(cli.Application):
             if max([entry["eloRating"] for entry in entries]) < self.MIN_INTERESTING_RATING:
                 break
             for entry in entries:
+                if entry["eloRating"] < self.MIN_INTERESTING_RATING:
+                    break
                 username = entry["userName"]
                 statistics = self.make_api_call("Player/Stats", {"name": username})
                 assert statistics["name"] == username
