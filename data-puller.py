@@ -10,7 +10,7 @@ import requests
 
 class DataPuller(cli.Application):
     API_URL = "https://quake-stats.bethesda.net/api/v2"
-    LEADERBOARD_PAGE_SIZE = 20
+    LEADERBOARD_PAGE_SIZE = 100
 
     def make_api_call(self, call, params):
         url = "{}/{}".format(self.API_URL, call)
@@ -26,7 +26,8 @@ class DataPuller(cli.Application):
             entries = leaderboard["entries"]
             if len(entries) == 0:
                 break
-            for entry in leaderboard["entries"]:
+            assert len(entries) <= self.LEADERBOARD_PAGE_SIZE
+            for entry in entries:
                 username = entry["userName"]
                 statistics = self.make_api_call("Player/Stats", {"name": username})
                 assert statistics["name"] == username
@@ -37,8 +38,12 @@ class DataPuller(cli.Application):
                     assert match_statistics["id"] == match["id"]
                     if match_statistics["gameMode"] != "GameModeClassicDuel":
                         continue
-                    players = [report["nickname"] for report in match_statistics["battleReportPersonalStatistics"]]
+                    reports = match_statistics["battleReportPersonalStatistics"]
+                    players = [report["nickname"] for report in reports]
                     if len(players) != 2:
+                        continue
+                    scores = [report["score"] for report in reports]
+                    if max(scores) == match_statistics["scoreLimit"]:
                         continue
                     match_description = {
                         "id": match_statistics["id"],
