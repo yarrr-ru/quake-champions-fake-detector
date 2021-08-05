@@ -15,6 +15,7 @@ class DataPuller(cli.Application):
     def make_api_call(self, call, params):
         url = "{}/{}".format(self.API_URL, call)
         response = requests.get(url, params=params)
+        print("request:", response.url, response.status_code)
         assert response.status_code == 200
         return json.loads(response.text)
 
@@ -22,12 +23,17 @@ class DataPuller(cli.Application):
         for offset in count(0, self.LEADERBOARD_PAGE_SIZE):
             leaderboard = self.make_api_call("Leaderboard", {"from": offset, "board": "duel", "season": "current"})
             assert leaderboard["boardType"] == "duel"
+            entries = leaderboard["entries"]
+            if len(entries) == 0:
+                break
             for entry in leaderboard["entries"]:
                 username = entry["userName"]
                 statistics = self.make_api_call("Player/Stats", {"name": username})
                 assert statistics["name"] == username
                 for match in statistics["matches"]:
                     match_statistics = self.make_api_call("Player/Games", {"id": match["id"]})
+                    if match_statistics is None:
+                        continue
                     assert match_statistics["id"] == match["id"]
                     if match_statistics["gameMode"] != "GameModeClassicDuel":
                         continue
