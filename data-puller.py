@@ -15,7 +15,7 @@ class DataPuller(cli.Application):
     def make_api_call(self, call, params):
         url = "{}/{}".format(self.API_URL, call)
         response = requests.get(url, params=params)
-        print("request:", response.url, response.status_code)
+        print("request:", response.url, response.status_code, flush=True)
         assert response.status_code == 200
         return json.loads(response.text)
 
@@ -46,7 +46,7 @@ class DataPuller(cli.Application):
                         "timestamp": match_statistics["playedDateTime"],
                         "players": players
                     }
-                    print(json.dumps(match_description))
+                    print(json.dumps(match_description), flush=True)
 
 
 if __name__ == "__main__":
